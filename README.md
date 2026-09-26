@@ -1,2 +1,5 @@
-# zippy-lights
-Zippy Lights — map color-coded zip-tie marks on Chritmas lights
+# Zippy Lights
+
+Map color-coded zip-tie marks on Christmas lights.
+
+**Open the app:** https://unger53194.github.io/zippy-lights/
