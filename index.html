@@ -1,0 +1,1338 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Zippy Lights</title>
+<meta name="theme-color" content="#113A2B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Zippy Lights">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Stencil+One&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#D9BC8C; --bg2:#C9A56F; --surface:#F2E7CE; --field:#FBF5E6;
+  --ink:#2A1F14; --ink2:#5C4730; --line:rgba(42,31,20,.22);
+  --danger:#A8241C; --grain:rgba(42,31,20,.06);
+  --primary:var(--ink); --on-primary:var(--bg); --stamp:var(--ink);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#211810; --bg2:#2E2318; --surface:#372a1d; --field:#2a2016;
+    --ink:#F1E3C6; --ink2:#C2A983; --line:rgba(241,227,198,.18);
+    --danger:#FF8A7E; --grain:rgba(241,227,198,.04);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#211810; --bg2:#2E2318; --surface:#372a1d; --field:#2a2016;
+  --ink:#F1E3C6; --ink2:#C2A983; --line:rgba(241,227,198,.18);
+  --danger:#FF8A7E; --grain:rgba(241,227,198,.04);
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+/* Christmas skin: evergreen night, cranberry, gold, snow */
+:root[data-skin="xmas"]{
+  --bg:#113A2B; --bg2:#0B2A1F; --surface:#18483A; --field:#0E3226;
+  --ink:#FBF3E4; --ink2:#C9DCC6; --line:rgba(251,243,228,.2);
+  --danger:#FF9A8F; --grain:rgba(255,255,255,.10);
+  --primary:#C8202F; --on-primary:#FFF7E8; --stamp:#E4B84A;
+  color-scheme:dark;
+}
+:root[data-skin="xmas"] body{
+  background-image:
+    radial-gradient(rgba(255,255,255,.16) 1.2px, transparent 1.6px),
+    radial-gradient(rgba(255,255,255,.08) 1px, transparent 1.4px);
+  background-size:46px 46px, 19px 23px;
+  background-position:0 0, 9px 13px;
+}
+:root[data-skin="xmas"] .stamp{color:#FBF3E4;box-shadow:inset 0 0 0 2px rgba(228,184,74,.35)}
+:root[data-skin="xmas"] .meter i{background:#E4B84A}
+.bulbs{display:none;width:100%;height:auto;margin:-2px 0 -6px;overflow:visible}
+:root[data-skin="xmas"] .bulbs{display:block}
+.bulbs .glow{animation:twinkle 3.2s ease-in-out infinite}
+@keyframes twinkle{0%,100%{opacity:1}50%{opacity:.45}}
+@media (prefers-reduced-motion: reduce){ .bulbs .glow{animation:none} }
+.skins{display:flex;gap:10px;flex-wrap:wrap}
+.skin{flex:1 1 150px;display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;border:2px solid var(--line);background:var(--surface);cursor:pointer;font-weight:700;text-align:left;min-height:56px}
+.skin[aria-pressed="true"]{border-color:var(--ink)}
+.skin .sw{flex:none;width:34px;height:34px;border-radius:8px;box-shadow:0 0 0 1px rgba(0,0,0,.3)}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0;min-height:100%;
+  background-color:var(--bg);
+  background-image:radial-gradient(var(--grain) 1px, transparent 1.3px);
+  background-size:6px 6px;
+  color:var(--ink);
+  font:17px/1.45 "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-tap-highlight-color:transparent;
+}
+img{max-width:100%}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.wrap{max-width:720px;margin:0 auto;padding:12px 18px 48px}
+
+/* Hero stamp */
+.hero{padding-top:14px}
+.stamp{
+  font-family:"Saira Stencil One", Impact, "Arial Narrow Bold", sans-serif;
+  font-weight:400;font-size:clamp(46px, 14vw, 76px);line-height:.95;
+  display:inline-block;margin:14px 0 14px 4px;padding:.1em .24em .04em;
+  border:4px solid var(--stamp);border-radius:6px;transform:rotate(-2deg);
+}
+.lede{max-width:34ch;margin:0 0 6px;color:var(--ink2);font-size:18px}
+h2{font-family:"Saira Stencil One", Impact, sans-serif;font-weight:400;font-size:28px;margin:34px 0 10px;line-height:1.1}
+.hint{color:var(--ink2);font-size:15px;margin:8px 0 0;max-width:52ch}
+
+/* Buttons */
+.btn{
+  border:2px solid var(--ink);background:transparent;border-radius:10px;
+  padding:11px 16px;min-height:48px;font-weight:700;cursor:pointer;
+}
+.btn.primary{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
+.btn.danger{border-color:var(--danger);color:var(--danger)}
+.btn:disabled{opacity:.5;cursor:default}
+.linkish{background:none;border:0;padding:6px 0;text-decoration:underline;text-underline-offset:3px;cursor:pointer;color:var(--ink2);font-size:15px}
+.adds{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.adds .btn{flex:1 1 180px}
+
+/* Season meter */
+.season{margin-top:20px}
+.meter{height:10px;border-radius:5px;background:var(--bg2);overflow:hidden;margin:8px 0 4px;border:1px solid var(--line)}
+.meter i{display:block;height:100%;background:var(--ink)}
+
+/* View list */
+.views{list-style:none;margin:0;padding:0}
+.view{
+  display:grid;grid-template-columns:96px 1fr;gap:14px;align-items:center;width:100%;
+  text-align:left;padding:10px;margin-bottom:10px;cursor:pointer;
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;
+}
+.view img,.view .noimg{width:96px;height:72px;object-fit:cover;border-radius:7px;background:var(--bg2);display:block}
+.view b{display:block;font-size:18px;line-height:1.2}
+.view small{color:var(--ink2);font-size:14px}
+.dots{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.dot{width:11px;height:11px;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+.empty{background:var(--surface);border:2px dashed var(--line);border-radius:12px;padding:18px;color:var(--ink2)}
+
+/* Tie key */
+.key{list-style:none;margin:0;padding:0}
+.key li{display:grid;grid-template-columns:78px 72px 1fr;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.key li:last-child{border-bottom:0}
+.key .nm{font-weight:700}
+.key input{width:100%;font:inherit;font-size:16px;color:var(--ink);background:transparent;border:0;border-bottom:1.5px dashed var(--line);padding:6px 2px;border-radius:0}
+.key input:focus{border-bottom-style:solid;border-bottom-color:var(--ink);outline:none}
+.key .mean{color:var(--ink2)}
+.footnote{margin-top:30px;font-size:14px;color:var(--ink2)}
+
+/* Zone screen */
+.bar{
+  position:sticky;top:env(safe-area-inset-top,0px);z-index:5;
+  display:flex;align-items:center;gap:8px;padding:8px 10px;
+  background:var(--bg);border-bottom:1px solid var(--line);
+}
+.back{background:none;border:0;padding:10px 8px;font-weight:700;cursor:pointer;white-space:nowrap}
+.zname{flex:1;margin:0;font-size:19px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.iconbtn{background:none;border:2px solid var(--line);border-radius:10px;width:44px;height:44px;cursor:pointer;font-size:20px;line-height:1}
+.stage{overflow:auto;background:var(--bg2);-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.plate{position:relative;margin:0 auto}
+.plate img{display:block;width:100%;height:auto;-webkit-user-select:none;user-select:none;-webkit-user-drag:none;-webkit-touch-callout:none}
+.plate.aim{cursor:crosshair}
+.pins{position:absolute;inset:0}
+.pins{--pin:20px}
+.pins.tiny{--pin:13px}
+.pins.medium{--pin:30px}
+.pin{
+  position:absolute;width:var(--pin);height:var(--pin);margin:calc(var(--pin) / -2) 0 0 calc(var(--pin) / -2);padding:0;
+  border-radius:50%;border:2px solid #fff;cursor:grab;touch-action:none;
+  box-shadow:0 0 0 1.5px rgba(0,0,0,.6),0 2px 5px rgba(0,0,0,.45);
+  font:700 calc(var(--pin) * .5)/1 "Atkinson Hyperlegible", system-ui, sans-serif;
+  display:grid;place-items:center;
+}
+.pins.medium .pin{border-width:2.5px}
+.pins.tiny .pin{border-width:1.5px;font-size:0}
+.pin.dragging{cursor:grabbing;z-index:3;box-shadow:0 0 0 3px #fff,0 0 0 5px #000,0 4px 12px rgba(0,0,0,.6)}
+.sizes{display:flex;border:2px solid var(--line);border-radius:10px;overflow:hidden;flex:none}
+.sizes button{background:none;border:0;width:40px;height:36px;cursor:pointer;display:grid;place-items:center}
+.sizes button + button{border-left:2px solid var(--line)}
+.sizes button[aria-pressed="true"]{background:var(--primary)}
+.sizes i{display:block;border-radius:50%;background:var(--ink)}
+.sizes button[aria-pressed="true"] i{background:var(--on-primary)}
+.pin.sel{transform:scale(1.25);box-shadow:0 0 0 3px #fff,0 0 0 5.5px #000,0 2px 8px rgba(0,0,0,.5);z-index:2}
+.pin.done::after{
+  content:"";position:absolute;right:-35%;top:-35%;width:max(8px, calc(var(--pin) * .45));height:max(8px, calc(var(--pin) * .45));border-radius:50%;
+  background:#2F9A46 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.2l2.2 2.2 4.8-4.8' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/100% no-repeat;
+  border:1.5px solid #fff;
+}
+.pin.link{border-radius:7px;background:#1C1A18;color:#fff}
+.pin.link svg{width:70%;height:70%}
+
+.listwrap{max-width:720px;margin:0 auto;padding:14px 14px 220px}
+.listhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:4px 4px 8px}
+.listhead b{font-size:18px}
+.listhead span{color:var(--ink2);font-size:15px}
+.ties{list-style:none;margin:0;padding:0}
+.tie{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:8px;padding:4px 6px 4px 4px}
+.tie .open{flex:1;min-width:0;display:flex;align-items:center;gap:12px;background:none;border:0;text-align:left;padding:8px;cursor:pointer}
+.tie .txt{min-width:0}
+.tie .t1{font-weight:700;display:block}
+.tie .t2{display:block;color:var(--ink2);font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bubble{
+  flex:none;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;
+  font:700 14px/1 "Atkinson Hyperlegible", system-ui, sans-serif;
+  box-shadow:0 0 0 1.5px rgba(0,0,0,.45);
+}
+.bubble.sq{border-radius:7px;background:#1C1A18;color:#fff}
+.bubble.sq svg{width:17px;height:17px}
+.upbox{display:flex;align-items:center;gap:6px;padding:8px;font-size:14px;color:var(--ink2);cursor:pointer}
+.upbox input{width:22px;height:22px;accent-color:#2F9A46;margin:0}
+
+.tools{
+  position:fixed;left:0;right:0;bottom:0;z-index:6;
+  background:var(--surface);border-top:1px solid var(--line);
+  padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));
+  box-shadow:0 -4px 14px rgba(0,0,0,.12);
+}
+.tools-in{max-width:720px;margin:0 auto}
+.row{display:flex;align-items:center;gap:10px}
+.seg{display:flex;flex:1;border:2px solid var(--ink);border-radius:11px;overflow:hidden}
+.seg button{flex:1;background:none;border:0;padding:10px 6px;min-height:44px;font-weight:700;cursor:pointer;font-size:15px}
+.seg button[aria-pressed="true"]{background:var(--primary);color:var(--on-primary)}
+.seg button + button{border-left:2px solid var(--ink)}
+.zoom{display:flex;gap:6px}
+.zoom button{width:44px;height:44px;border-radius:10px;border:2px solid var(--line);background:none;font-size:22px;font-weight:700;cursor:pointer}
+.chips{display:flex;gap:10px;overflow-x:auto;padding:12px 7px 7px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;width:36px;height:36px;border-radius:50%;border:0;cursor:pointer;box-shadow:0 0 0 1.5px rgba(0,0,0,.4)}
+.chip[aria-pressed="true"]{box-shadow:0 0 0 3px var(--surface),0 0 0 5.5px var(--ink)}
+.tip{font-size:15px;color:var(--ink2);margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+
+/* Sheets */
+.scrim{position:fixed;inset:0;z-index:20;background:rgba(18,12,6,.45);display:flex;align-items:flex-end;justify-content:center}
+.sheet{
+  width:100%;max-width:560px;max-height:78%;overflow:auto;overscroll-behavior:contain;
+  background:var(--surface);border-radius:18px 18px 0 0;
+  padding:16px 18px calc(18px + env(safe-area-inset-bottom,0px));
+  box-shadow:0 -8px 30px rgba(0,0,0,.3);
+}
+.sheet h3{margin:0;font-size:20px;line-height:1.2}
+.sh-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.sh-head .grow{flex:1;min-width:0}
+.sh-sub{color:var(--ink2);font-size:15px}
+.x{background:none;border:0;width:44px;height:44px;font-size:26px;line-height:1;cursor:pointer;color:var(--ink2)}
+.field{display:block;margin:12px 0}
+.field > span{display:block;font-size:14px;font-weight:700;color:var(--ink2);margin-bottom:5px}
+.field input[type=text],.field textarea{
+  width:100%;font:inherit;font-size:17px;color:var(--ink);background:var(--field);
+  border:1.5px solid var(--line);border-radius:9px;padding:10px 12px;
+}
+.field textarea{resize:vertical;min-height:70px}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--ink)}
+.field .chips{padding-top:7px}
+.closeup{display:block;width:100%;max-height:44vh;object-fit:contain;background:var(--bg2);border-radius:10px;margin-bottom:8px}
+.sheet-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.sheet-actions .btn{flex:1 1 120px}
+.toggle{display:flex;align-items:center;gap:10px;font-weight:700;margin:14px 0 4px;cursor:pointer}
+.toggle input{width:24px;height:24px;accent-color:#2F9A46;margin:0}
+.preview{display:block;width:100%;max-height:34vh;object-fit:contain;border-radius:10px;background:var(--bg2)}
+.pick{list-style:none;margin:8px 0 0;padding:0}
+.pick button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:8px;margin-bottom:8px;cursor:pointer;font-weight:700}
+.pick img{width:64px;height:48px;object-fit:cover;border-radius:6px}
+
+.toast{
+  position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 12px);z-index:40;
+  transform:translate(-50%,-150%);transition:transform .25s ease;
+  background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:700;
+  max-width:calc(100% - 24px);text-align:center;font-size:15px;
+}
+.toast.on{transform:translate(-50%,0)}
+.loading{padding:40px 0;color:var(--ink2)}
+@media (prefers-reduced-motion: reduce){ .toast{transition:none} .pin.sel{transform:none} }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<input type="file" id="file-view" accept="image/*" hidden>
+<input type="file" id="file-closeup" accept="image/*" hidden>
+<input type="file" id="file-backup" accept=".json,application/json" hidden>
+
+<script>
+(() => {
+"use strict";
+
+/* ---------- Tie colors ---------- */
+const TIES = [
+  {k:"red",    name:"Red",    hex:"#D1242F", ink:"#fff"},
+  {k:"orange", name:"Orange", hex:"#EE7A1A", ink:"#fff"},
+  {k:"yellow", name:"Yellow", hex:"#F4C918", ink:"#2A1F14"},
+  {k:"green",  name:"Green",  hex:"#2F9A46", ink:"#fff"},
+  {k:"blue",   name:"Blue",   hex:"#1E63D6", ink:"#fff"},
+  {k:"purple", name:"Purple", hex:"#7A3DB0", ink:"#fff"},
+  {k:"pink",   name:"Pink",   hex:"#E0508F", ink:"#fff"},
+  {k:"white",  name:"White",  hex:"#F7F5EF", ink:"#2A1F14"},
+  {k:"black",  name:"Black",  hex:"#1C1A18", ink:"#fff"},
+];
+const TIE = Object.fromEntries(TIES.map(t => [t.k, t]));
+const ORDER = Object.fromEntries(TIES.map((t,i) => [t.k, i]));
+
+const CAM = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="13.2" r="3.4" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+
+/* ---------- State ---------- */
+const S = {
+  mode:"local", readOnly:false, zones:[], legend:{},
+  cur:null, tool:"look", color:"red", zoom:1, moving:null, sel:null,
+  downloads:null, pendingKind:null, closeupFor:null,
+};
+let Store = null;
+const urlCache = {};
+
+/* ---------- Helpers ---------- */
+const $ = (s, r=document) => r.querySelector(s);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const zoneById = id => S.zones.find(z => z.id === id);
+const ties = z => (z.pins || []).filter(p => p.type !== "link");
+const links = z => (z.pins || []).filter(p => p.type === "link");
+const allTies = () => S.zones.flatMap(ties);
+const tieName = p => `${TIE[p.c]?.name || p.c} ${p.n}`;
+const viewNo = z => S.zones.indexOf(z) + 1;
+const SIZES = ["tiny", "small", "medium"];
+const skin = () => S.legend._theme === "kraft" ? "kraft" : "xmas";
+function applySkin(){
+  const s = skin();
+  if (s === "xmas") document.documentElement.dataset.skin = "xmas";
+  else delete document.documentElement.dataset.skin;
+  try { localStorage.setItem("zl-skin", s); } catch (e) {}
+}
+document.documentElement.dataset.skin = "xmas";
+try { if (localStorage.getItem("zl-skin") === "kraft") delete document.documentElement.dataset.skin; } catch (e) {}
+function bulbString(){
+  const colors = ["#FF4B4B", "#FFD35C", "#43D38A", "#5AA8FF", "#FF9ED2"];
+  const q = (a, c, b, t) => (1 - t) * (1 - t) * a + 2 * (1 - t) * t * c + t * t * b;
+  const swags = [[0, 6, 90, 40, 180, 6], [180, 6, 270, 40, 360, 6]];
+  let wire = "", bulbs = "", i = 0;
+  for (const [x0, y0, cx, cy, x1, y1] of swags) {
+    wire += `M${x0} ${y0} Q${cx} ${cy} ${x1} ${y1} `;
+    for (const t of [0.12, 0.31, 0.5, 0.69, 0.88]) {
+      const x = q(x0, cx, x1, t), y = q(y0, cy, y1, t), col = colors[i % colors.length];
+      const delay = ((i * 0.37) % 3.2).toFixed(2);
+      bulbs += `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})">
+        <circle class="glow" cx="0" cy="12" r="10" fill="${col}" opacity=".35" filter="url(#zlBlur)" style="animation-delay:${delay}s"/>
+        <rect x="-2.6" y="-1" width="5.2" height="5" rx="1" fill="#0B2A1F"/>
+        <path d="M0 3.5 C5 3.5 6.5 11 0 20 C-6.5 11 -5 3.5 0 3.5Z" fill="${col}"/>
+        <path d="M-1.8 7 C-2.6 9 -2.4 11 -1.4 13" stroke="rgba(255,255,255,.7)" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+      </g>`;
+      i++;
+    }
+  }
+  return `<svg class="bulbs" viewBox="0 -4 360 66" aria-hidden="true">
+    <defs><filter id="zlBlur" x="-1" y="-1" width="3" height="3"><feGaussianBlur stdDeviation="4"/></filter></defs>
+    <path d="${wire}" fill="none" stroke="#0B2A1F" stroke-width="2"/>
+    ${bulbs}</svg>`;
+}
+const dotSize = () => SIZES.includes(S.legend._dot) ? S.legend._dot : "small";
+
+let toastTimer;
+function toast(msg, ms = 2600){
+  const t = $("#toast"); t.textContent = msg; t.classList.add("on");
+  clearTimeout(toastTimer);
+  if (ms) toastTimer = setTimeout(() => t.classList.remove("on"), ms);
+}
+function loadImg(src){
+  return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
+}
+function imgURL(ref){
+  if (!ref) return "";
+  if (ref.startsWith("a:")) return "/_blob/" + ref.slice(2);
+  return urlCache[ref] || "";
+}
+function nextN(color, exceptId){
+  let max = 0;
+  for (const p of allTies()) if (p.c === color && p.id !== exceptId) max = Math.max(max, p.n || 0);
+  return max + 1;
+}
+async function shrink(file, max){
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await loadImg(url);
+    const s = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement("canvas");
+    c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    const blob = await new Promise(r => c.toBlob(r, "image/jpeg", 0.86));
+    if (!blob) throw new Error("encode");
+    return { blob, w: c.width, h: c.height };
+  } finally { URL.revokeObjectURL(url); }
+}
+async function retry(fn){
+  try { return await fn(); }
+  catch (e) {
+    if (e && (e.code === "unavailable" || e.code === "store_unavailable")) { await sleep(300 + Math.random() * 500); return fn(); }
+    throw e;
+  }
+}
+function errMsg(e){
+  if (e && e.code === "quota_exceeded") return "Storage is full. Delete a view or close-up to make room.";
+  if (e && (e.code === "too_large")) return "That photo is too large to store.";
+  return "Couldn't save that change. Check your connection and try again.";
+}
+
+/* ---------- Storage: cloud (artifact db + assets) ---------- */
+const Cloud = {
+  db:null, assets:null,
+  async loadAll(){
+    const snap = await retry(() => this.db.collection("zones").get());
+    const zones = snap.docs.filter(d => d.exists).map(d => ({ ...structuredClone(d.data()), id: d.id }));
+    const lg = await retry(() => this.db.doc("settings/legend").get());
+    return { zones, legend: lg.exists ? structuredClone(lg.data()) : {} };
+  },
+  async saveZone(z){
+    const { id, ...body } = z;
+    await retry(() => this.db.doc("zones/" + id).set(JSON.parse(JSON.stringify(body))));
+  },
+  async deleteZone(id){ await retry(() => this.db.doc("zones/" + id).delete()); },
+  async saveLegend(l){ await retry(() => this.db.doc("settings/legend").set({ ...l })); },
+  async putImage(blob){ const r = await retry(() => this.assets.upload(blob, { type: "image/jpeg" })); return "a:" + r.id; },
+  async deleteImage(ref){ if (ref && ref.startsWith("a:")) { try { await this.assets.delete(ref.slice(2)); } catch (e) {} } },
+};
+
+/* ---------- Storage: this device (IndexedDB) ---------- */
+const Local = {
+  db:null,
+  open(){
+    return new Promise((res, rej) => {
+      const rq = indexedDB.open("zippy-lights", 1);
+      rq.onupgradeneeded = () => {
+        const d = rq.result;
+        d.createObjectStore("zones", { keyPath: "id" });
+        d.createObjectStore("kv");
+        d.createObjectStore("images");
+      };
+      rq.onsuccess = () => res(rq.result);
+      rq.onerror = () => rej(rq.error);
+    });
+  },
+  run(store, mode, fn){
+    return new Promise((res, rej) => {
+      const t = this.db.transaction(store, mode);
+      const r = fn(t.objectStore(store));
+      t.oncomplete = () => res(r ? r.result : undefined);
+      t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
+    });
+  },
+  async loadAll(){
+    const zones = await this.run("zones", "readonly", s => s.getAll()) || [];
+    const legend = await this.run("kv", "readonly", s => s.get("legend")) || {};
+    const refs = new Set();
+    zones.forEach(z => { if (z.img) refs.add(z.img); (z.pins || []).forEach(p => p.closeup && refs.add(p.closeup)); });
+    for (const ref of refs) {
+      const blob = await this.run("images", "readonly", s => s.get(ref));
+      if (blob) urlCache[ref] = URL.createObjectURL(blob);
+    }
+    return { zones, legend };
+  },
+  saveZone(z){ return this.run("zones", "readwrite", s => s.put(JSON.parse(JSON.stringify(z)))); },
+  deleteZone(id){ return this.run("zones", "readwrite", s => s.delete(id)); },
+  saveLegend(l){ return this.run("kv", "readwrite", s => s.put({ ...l }, "legend")); },
+  async putImage(blob){
+    const ref = "l:" + uid();
+    await this.run("images", "readwrite", s => s.put(blob, ref));
+    urlCache[ref] = URL.createObjectURL(blob);
+    return ref;
+  },
+  async deleteImage(ref){ if (ref) { try { await this.run("images", "readwrite", s => s.delete(ref)); } catch (e) {} } },
+};
+
+/* ---------- Storage: memory only (last resort) ---------- */
+const Mem = {
+  async loadAll(){ return { zones: [], legend: {} }; },
+  async saveZone(){}, async deleteZone(){}, async saveLegend(){},
+  async putImage(blob){ const ref = "m:" + uid(); urlCache[ref] = URL.createObjectURL(blob); return ref; },
+  async deleteImage(){},
+};
+
+/* ---------- Save queue (one write at a time per doc) ---------- */
+const timers = {}, chains = {};
+function queue(key, fn){
+  chains[key] = (chains[key] || Promise.resolve()).then(fn).catch(e => { console.error(e); toast(errMsg(e)); });
+  return chains[key];
+}
+function saveZone(z, delay = 350){
+  if (S.readOnly) return;
+  clearTimeout(timers[z.id]);
+  timers[z.id] = setTimeout(() => queue(z.id, () => Store.saveZone(z)), delay);
+}
+function saveLegend(){
+  if (S.readOnly) return;
+  clearTimeout(timers.legend);
+  timers.legend = setTimeout(() => queue("legend", () => Store.saveLegend(S.legend)), 600);
+}
+
+/* ---------- Sheets ---------- */
+let sheetEl = null, sheetOnClose = null;
+function openSheet(html, { label = "Details", onClose } = {}){
+  closeSheet(true);
+  const scrim = document.createElement("div");
+  scrim.className = "scrim";
+  scrim.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(label)}">${html}</div>`;
+  scrim.addEventListener("click", e => { if (e.target === scrim) closeSheet(); });
+  document.body.appendChild(scrim);
+  sheetEl = scrim; sheetOnClose = onClose || null;
+  return scrim.firstElementChild;
+}
+function closeSheet(silent){
+  if (!sheetEl) return;
+  sheetEl.remove(); sheetEl = null;
+  const cb = sheetOnClose; sheetOnClose = null;
+  if (!silent && cb) cb();
+}
+function confirmSheet(title, body, okLabel, onOk){
+  const el = openSheet(`
+    <div class="sh-head"><div class="grow"><h3>${esc(title)}</h3></div></div>
+    <p class="sh-sub" style="margin:0">${esc(body)}</p>
+    <div class="sheet-actions">
+      <button class="btn" data-x="cancel">Cancel</button>
+      <button class="btn danger" data-x="ok">${esc(okLabel)}</button>
+    </div>`, { label: title });
+  el.querySelector('[data-x="cancel"]').onclick = () => closeSheet();
+  el.querySelector('[data-x="ok"]').onclick = () => { closeSheet(true); onOk(); };
+}
+document.addEventListener("keydown", e => { if (e.key === "Escape" && sheetEl) closeSheet(); });
+
+/* ---------- Tie strap graphic ---------- */
+function strap(t){
+  const stroke = "rgba(0,0,0,.4)";
+  let ridges = "";
+  for (let x = 20; x < 66; x += 4.5) ridges += `<line x1="${x}" y1="6.6" x2="${x}" y2="11.4" stroke="rgba(0,0,0,.22)" stroke-width="1"/>`;
+  return `<svg viewBox="0 0 76 18" width="76" height="18" aria-hidden="true">
+    <polygon points="15,5.5 74,7.6 74,10.4 15,12.5" fill="${t.hex}" stroke="${stroke}" stroke-width="1"/>
+    ${ridges}
+    <rect x="1" y="1.5" width="16" height="15" rx="3" fill="${t.hex}" stroke="${stroke}" stroke-width="1"/>
+    <rect x="5.5" y="6" width="7" height="6" rx="1" fill="rgba(0,0,0,.3)"/>
+  </svg>`;
+}
+
+/* ---------- Home ---------- */
+function renderLoading(){
+  $("#app").innerHTML = `<div class="wrap"><header class="hero"><h1 class="stamp">Zippy Lights</h1></header><p class="loading">Opening your light map…</p></div>`;
+}
+
+function renderHome(){
+  S.cur = null; S.moving = null; S.sel = null;
+  const all = allTies();
+  const done = all.filter(p => p.done).length;
+  const ro = S.readOnly;
+
+  const season = all.length ? `
+    <section class="season" aria-label="This season">
+      <div><strong>${done} of ${all.length}</strong> ties back up this season</div>
+      <div class="meter"><i style="width:${Math.round(done / all.length * 100)}%"></i></div>
+      ${done && !ro ? `<button class="linkish" data-act="new-season">Start a new season</button>` : ""}
+    </section>` : "";
+
+  const views = S.zones.length ? `<ul class="views">${S.zones.map(z => {
+    const t = ties(z);
+    const colors = [...new Set(t.map(p => p.c))].sort((a,b) => ORDER[a] - ORDER[b]);
+    const src = imgURL(z.img);
+    return `<li><button class="view" data-act="open" data-id="${z.id}">
+      ${src ? `<img src="${esc(src)}" alt="" loading="lazy">` : `<span class="noimg"></span>`}
+      <span>
+        <b>${esc(z.name)}</b>
+        <small>${z.kind === "map" ? "Top-down map" : "Photo"}, ${t.length} ${t.length === 1 ? "tie" : "ties"}${links(z).length ? `, ${links(z).length} photo ${links(z).length === 1 ? "spot" : "spots"}` : ""}</small>
+        ${colors.length ? `<span class="dots">${colors.map(c => `<i class="dot" style="background:${TIE[c].hex}"></i>`).join("")}</span>` : ""}
+      </span>
+    </button></li>`;
+  }).join("")}</ul>` : `<div class="empty">No views yet. Take a photo of the first stretch of lights, or add a top-down map of the house to start.</div>`;
+
+  const adds = ro ? "" : `
+    <div class="adds">
+      <button class="btn primary" data-act="add-photo">Take a photo</button>
+      <button class="btn" data-act="add-map">Add top-down map</button>
+    </div>
+    <p class="hint">For the map, screenshot your house in Google Maps satellite view and pick the screenshot here.</p>`;
+
+  const key = `<ul class="key">${TIES.map(t => {
+    const count = all.filter(p => p.c === t.k).length;
+    const meaning = S.legend[t.k] || "";
+    return `<li>
+      ${strap(t)}
+      <span class="nm">${t.name}${count ? ` <small class="mean">(${count})</small>` : ""}</span>
+      ${ro ? `<span class="mean">${esc(meaning) || "–"}</span>`
+           : `<input type="text" data-legend="${t.k}" value="${esc(meaning)}" placeholder="What ${t.name.toLowerCase()} means" aria-label="${t.name} tie meaning" autocomplete="off">`}
+    </li>`;
+  }).join("")}</ul>`;
+
+  const note = S.mode === "local" ? `<p class="footnote">Saved in this browser on this device. Save a backup each season so nothing gets lost.</p>`
+             : S.mode === "memory" ? `<p class="footnote">Changes aren't kept after you close this page.</p>` : "";
+
+  $("#app").innerHTML = `
+    <div class="wrap">
+      <header class="hero">
+        ${bulbString()}
+        <h1 class="stamp">Zippy Lights</h1>
+        <p class="lede">Clip a colored zip tie at each key spot, snap a picture, and mark it here. Next year, match every tie back to its spot.</p>
+      </header>
+      ${season}
+      <h2>Views</h2>
+      ${views}
+      ${adds}
+      <h2>Tie key</h2>
+      <p class="hint" style="margin:0 0 8px">Give each color a job, like "Start of a strand" or "Goes around the lamp post".</p>
+      ${key}
+      <h2>Print it</h2>
+      <button class="btn" data-act="pdf" ${S.zones.length ? "" : "disabled"}>Save PDF</button>
+      <p class="hint">One page per view with every tie numbered and a box to tick, ready to print and keep with the lights.</p>
+      <h2>Backup</h2>
+      <div class="adds">
+        <button class="btn" data-act="backup" ${S.zones.length ? "" : "disabled"}>Save backup</button>
+        ${ro ? "" : `<button class="btn" data-act="restore">Restore backup</button>`}
+      </div>
+      <p class="hint">One file with every photo, tie and note. Use it to move your house between copies of the app, or keep it somewhere safe.</p>
+      <h2>Look</h2>
+      <div class="skins" role="group" aria-label="App theme">
+        <button class="skin" data-act="skin" data-s="xmas" aria-pressed="${skin() === "xmas"}"><span class="sw" style="background:linear-gradient(135deg,#113A2B 55%,#C8202F 55%,#C8202F 75%,#E4B84A 75%)"></span>Christmas</button>
+        <button class="skin" data-act="skin" data-s="kraft" aria-pressed="${skin() === "kraft"}"><span class="sw" style="background:#D9BC8C;border:3px solid #2A1F14"></span>Kraft box</button>
+      </div>
+      ${note}
+    </div>`;
+  window.scrollTo(0, 0);
+}
+
+/* ---------- Zone screen ---------- */
+function openZone(id){
+  const z = zoneById(id); if (!z) return renderHome();
+  S.cur = id; S.zoom = 1; S.moving = null; S.sel = null;
+  S.tool = S.readOnly ? "look" : (ties(z).length ? "look" : "add");
+  const ro = S.readOnly;
+  $("#app").innerHTML = `
+    <div class="bar">
+      <button class="back" data-act="home">‹ Views</button>
+      <h1 class="zname">${esc(z.name)}</h1>
+      ${ro ? "" : `<button class="iconbtn" data-act="zone-menu" aria-label="View options">⋯</button>`}
+    </div>
+    <div class="stage" id="stage">
+      <div class="plate" id="plate">
+        <img id="zimg" src="${esc(imgURL(z.img))}" alt="${esc(z.name)}" draggable="false">
+        <div class="pins" id="pins"></div>
+      </div>
+    </div>
+    <div class="listwrap">
+      <div class="listhead" id="listhead"></div>
+      <ul class="ties" id="ties"></ul>
+    </div>
+    <div class="tools" id="tools"></div>`;
+  $("#plate").addEventListener("click", onPlateTap);
+  $("#zimg").addEventListener("load", layoutStage);
+  layoutStage(); renderPins(); renderList(); renderTools();
+  window.scrollTo(0, 0);
+}
+
+function layoutStage(){
+  const z = zoneById(S.cur); const stage = $("#stage"), plate = $("#plate");
+  if (!z || !stage) return;
+  const img = $("#zimg");
+  const w = z.w || img.naturalWidth || 4, h = z.h || img.naturalHeight || 3;
+  const maxH = Math.max(240, Math.round(window.innerHeight * 0.56));
+  stage.style.maxHeight = maxH + "px";
+  const base = Math.min(stage.clientWidth, maxH * (w / h));
+  const cx = stage.scrollWidth ? (stage.scrollLeft + stage.clientWidth / 2) / stage.scrollWidth : .5;
+  const cy = stage.scrollHeight ? (stage.scrollTop + stage.clientHeight / 2) / stage.scrollHeight : .5;
+  plate.style.width = Math.round(base * S.zoom) + "px";
+  stage.scrollLeft = cx * stage.scrollWidth - stage.clientWidth / 2;
+  stage.scrollTop = cy * stage.scrollHeight - stage.clientHeight / 2;
+}
+window.addEventListener("resize", () => { if (S.cur) layoutStage(); });
+
+function renderPins(){
+  const z = zoneById(S.cur); const layer = $("#pins"); if (!z || !layer) return;
+  layer.className = "pins " + dotSize();
+  layer.innerHTML = (z.pins || []).map(p => {
+    const pos = `left:${(p.x * 100).toFixed(3)}%;top:${(p.y * 100).toFixed(3)}%`;
+    if (p.type === "link") {
+      const to = zoneById(p.to);
+      return `<button class="pin link ${S.sel === p.id ? "sel" : ""}" style="${pos}" data-pin="${p.id}" aria-label="Photo spot: ${esc(to ? to.name : "missing view")}">${CAM}</button>`;
+    }
+    const t = TIE[p.c] || TIE.red;
+    return `<button class="pin ${p.done ? "done" : ""} ${S.sel === p.id ? "sel" : ""}" style="${pos};background:${t.hex};color:${t.ink}" data-pin="${p.id}" aria-label="${esc(tieName(p))}${p.label ? ": " + esc(p.label) : ""}">${p.n}</button>`;
+  }).join("");
+}
+
+function renderList(){
+  const z = zoneById(S.cur); if (!z) return;
+  const t = ties(z).slice().sort((a,b) => (ORDER[a.c] - ORDER[b.c]) || (a.n - b.n));
+  const l = links(z);
+  const done = t.filter(p => p.done).length;
+  $("#listhead").innerHTML = `<b>${t.length} ${t.length === 1 ? "tie" : "ties"} here</b>${t.length ? `<span>${done} up this season</span>` : ""}`;
+  const rows = t.map(p => {
+    const c = TIE[p.c] || TIE.red;
+    return `<li class="tie">
+      <button class="open" data-act="pin" data-id="${p.id}">
+        <span class="bubble" style="background:${c.hex};color:${c.ink}">${p.n}</span>
+        <span class="txt"><span class="t1">${esc(tieName(p))}</span><span class="t2">${esc(p.label) || "No spot written yet"}</span></span>
+      </button>
+      ${S.readOnly ? (p.done ? `<span class="upbox">Up</span>` : "") :
+        `<label class="upbox"><input type="checkbox" data-done="${p.id}" ${p.done ? "checked" : ""}> Up</label>`}
+    </li>`;
+  });
+  const linkRows = l.map(p => {
+    const to = zoneById(p.to);
+    return `<li class="tie"><button class="open" data-act="pin" data-id="${p.id}">
+      <span class="bubble sq">${CAM}</span>
+      <span class="txt"><span class="t1">Photo spot</span><span class="t2">${esc(to ? to.name : "View was deleted")}</span></span>
+    </button></li>`;
+  });
+  const empty = !t.length && !l.length
+    ? `<li class="empty">${S.readOnly ? "No ties marked here yet." : `Pick a color below, then tap the ${z.kind === "map" ? "map" : "photo"} where that zip tie is.`}</li>` : "";
+  $("#ties").innerHTML = rows.join("") + linkRows.join("") + empty;
+}
+
+function renderTools(){
+  const z = zoneById(S.cur); const el = $("#tools"); if (!z || !el) return;
+  const plate = $("#plate");
+  const aiming = !!S.moving || S.tool === "add" || S.tool === "link";
+  plate.classList.toggle("aim", aiming);
+  const sz = dotSize();
+  const sizes = `<div class="sizes" role="group" aria-label="Dot size">${SIZES.map((s, i) =>
+    `<button data-act="dot" data-s="${s}" aria-pressed="${sz === s}" aria-label="${s} dots"><i style="width:${6 + i * 5}px;height:${6 + i * 5}px"></i></button>`).join("")}</div>`;
+  const zoom = `<div class="zoom"><button data-act="zoom-out" aria-label="Zoom out">−</button><button data-act="zoom-in" aria-label="Zoom in">+</button></div>`;
+  if (S.readOnly) {
+    el.innerHTML = `<div class="tools-in"><div class="row"><div class="tip" style="flex:1;margin:0">Tap a tie to see where it goes.</div>${zoom}</div><div class="tip">Dot size ${sizes}</div></div>`;
+    return;
+  }
+  if (S.moving) {
+    const p = (z.pins || []).find(q => q.id === S.moving);
+    el.innerHTML = `<div class="tools-in"><div class="row"><div class="tip" style="flex:1;margin:0">Tap the new spot for ${p && p.type === "link" ? "the photo spot" : esc(tieName(p))}.</div><button class="btn" data-act="cancel-move">Cancel</button></div></div>`;
+    return;
+  }
+  const seg = `<div class="seg">
+    <button data-act="tool" data-tool="look" aria-pressed="${S.tool === "look"}">Look</button>
+    <button data-act="tool" data-tool="add" aria-pressed="${S.tool === "add"}">Add tie</button>
+    ${z.kind === "map" ? `<button data-act="tool" data-tool="link" aria-pressed="${S.tool === "link"}">Photo spot</button>` : ""}
+  </div>`;
+  let extra = "";
+  if (S.tool === "add") {
+    const t = TIE[S.color];
+    extra = `<div class="chips" role="group" aria-label="Tie color">${TIES.map(c =>
+      `<button class="chip" style="background:${c.hex}" data-act="color" data-c="${c.k}" aria-pressed="${S.color === c.k}" aria-label="${c.name}"></button>`).join("")}</div>
+      <div class="tip">Tap where the ${t.name.toLowerCase()} tie is. It'll be ${t.name} ${nextN(S.color)}.</div>`;
+  } else if (S.tool === "link") {
+    extra = `<div class="tip">Tap the map where you stood to take a photo, then pick that photo.</div>`;
+  } else {
+    extra = `<div class="tip"><span>Drag a tie to move it. Tap to edit.</span>${sizes}</div>`;
+  }
+  el.innerHTML = `<div class="tools-in"><div class="row">${seg}${zoom}</div>${extra}</div>`;
+}
+
+function onPlateTap(e){
+  if (e.target.closest(".pin")) return;
+  const z = zoneById(S.cur); if (!z || S.readOnly) return;
+  const r = $("#plate").getBoundingClientRect();
+  const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+  if (x < 0 || x > 1 || y < 0 || y > 1) return;
+  if (S.moving) {
+    const p = z.pins.find(q => q.id === S.moving);
+    if (p) { p.x = x; p.y = y; saveZone(z); }
+    S.moving = null; renderPins(); renderTools();
+    toast("Moved");
+    return;
+  }
+  if (S.tool === "add") {
+    const p = { id: uid(), c: S.color, n: nextN(S.color), x, y, label: "", note: "", closeup: null, done: false };
+    z.pins = z.pins || []; z.pins.push(p);
+    saveZone(z); renderPins(); renderList(); renderTools();
+    openPinSheet(p.id, true);
+  } else if (S.tool === "link") {
+    pickLinkTarget(z, x, y);
+  }
+}
+
+/* ---------- Pin sheet ---------- */
+function openPinSheet(id, fresh){
+  const z = zoneById(S.cur); const p = z && (z.pins || []).find(q => q.id === id);
+  if (!p) return;
+  if (p.type === "link") return openLinkSheet(p);
+  S.sel = id; renderPins();
+  const ro = S.readOnly;
+  const draw = () => {
+    const c = TIE[p.c] || TIE.red;
+    const cu = imgURL(p.closeup);
+    const el = openSheet(`
+      <div class="sh-head">
+        <span class="bubble" style="background:${c.hex};color:${c.ink};width:40px;height:40px;font-size:17px">${p.n}</span>
+        <div class="grow"><h3>${esc(tieName(p))}</h3><div class="sh-sub">${esc(z.name)}</div></div>
+        <button class="x" data-x="close" aria-label="Close">×</button>
+      </div>
+      ${ro ? `
+        <p style="margin:0 0 8px;font-weight:700">${esc(p.label) || "No spot written"}</p>
+        ${p.note ? `<p class="sh-sub" style="margin:0 0 10px;white-space:pre-wrap">${esc(p.note)}</p>` : ""}
+        ${cu ? `<img class="closeup" src="${esc(cu)}" alt="Close-up of ${esc(tieName(p))}">` : ""}
+      ` : `
+        <label class="field"><span>Where it goes</span>
+          <input type="text" id="f-label" value="${esc(p.label)}" placeholder="e.g. Left end of front gutter, first bulb" autocomplete="off"></label>
+        <label class="field"><span>Notes</span>
+          <textarea id="f-note" rows="2" placeholder="e.g. Plug faces down, clip sits behind the downspout">${esc(p.note)}</textarea></label>
+        <div class="field"><span>Close-up</span>
+          ${cu ? `<img class="closeup" src="${esc(cu)}" alt="Close-up of ${esc(tieName(p))}">` : ""}
+          <div class="row">
+            <button class="btn" data-x="closeup" style="flex:1">${cu ? "Replace close-up" : "Add close-up photo"}</button>
+            ${cu ? `<button class="btn danger" data-x="rm-closeup">Remove</button>` : ""}
+          </div>
+        </div>
+        <div class="field"><span>Tie color</span>
+          <div class="chips" role="group" aria-label="Tie color">${TIES.map(t =>
+            `<button class="chip" style="background:${t.hex}" data-x="recolor" data-c="${t.k}" aria-pressed="${p.c === t.k}" aria-label="${t.name}"></button>`).join("")}</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="f-done" ${p.done ? "checked" : ""}> Up this season</label>
+        <div class="sheet-actions">
+          <button class="btn" data-x="move">Move</button>
+          <button class="btn danger" data-x="delete">Delete</button>
+          <button class="btn primary" data-x="close">Done</button>
+        </div>
+      `}`, { label: tieName(p), onClose: () => { S.sel = null; renderPins(); } });
+
+    el.querySelectorAll('[data-x="close"]').forEach(b => b.onclick = () => closeSheet());
+    if (ro) return;
+    const lab = el.querySelector("#f-label"), note = el.querySelector("#f-note");
+    lab.oninput = () => { p.label = lab.value; saveZone(z, 700); renderList(); renderPins(); };
+    note.oninput = () => { p.note = note.value; saveZone(z, 700); };
+    el.querySelector("#f-done").onchange = e => { p.done = e.target.checked; saveZone(z); renderPins(); renderList(); };
+    el.querySelectorAll('[data-x="recolor"]').forEach(b => b.onclick = () => {
+      if (b.dataset.c === p.c) return;
+      p.c = b.dataset.c; p.n = nextN(p.c, p.id);
+      saveZone(z); renderPins(); renderList(); renderTools(); draw();
+    });
+    el.querySelector('[data-x="closeup"]').onclick = () => { S.closeupFor = { zone: z.id, pin: p.id, redraw: draw }; $("#file-closeup").click(); };
+    const rm = el.querySelector('[data-x="rm-closeup"]');
+    if (rm) rm.onclick = () => {
+      const old = p.closeup; p.closeup = null; saveZone(z);
+      queue(z.id + ":img", () => Store.deleteImage(old)); draw();
+    };
+    el.querySelector('[data-x="move"]').onclick = () => {
+      S.moving = p.id; closeSheet(true); S.sel = p.id; renderPins(); renderTools();
+    };
+    el.querySelector('[data-x="delete"]').onclick = () => confirmSheet(
+      `Delete ${tieName(p)}?`, "The mark and its close-up photo are removed.", "Delete tie", () => {
+        z.pins = z.pins.filter(q => q.id !== p.id);
+        if (p.closeup) queue(z.id + ":img", () => Store.deleteImage(p.closeup));
+        saveZone(z); S.sel = null; renderPins(); renderList(); renderTools(); toast(`${tieName(p)} deleted`);
+      });
+    if (fresh) setTimeout(() => lab.focus(), 60);
+  };
+  draw();
+}
+
+/* ---------- Photo spots on the map ---------- */
+function pickLinkTarget(z, x, y){
+  const photos = S.zones.filter(q => q.id !== z.id);
+  if (!photos.length) { toast("Add a photo view first, then link it here."); return; }
+  const el = openSheet(`
+    <div class="sh-head"><div class="grow"><h3>Which photo was taken here?</h3></div><button class="x" data-x="close" aria-label="Close">×</button></div>
+    <ul class="pick">${photos.map(q => `<li><button data-to="${q.id}"><img src="${esc(imgURL(q.img))}" alt="">${esc(q.name)}</button></li>`).join("")}</ul>`,
+    { label: "Pick a photo" });
+  el.querySelector('[data-x="close"]').onclick = () => closeSheet();
+  el.querySelectorAll("[data-to]").forEach(b => b.onclick = () => {
+    z.pins = z.pins || [];
+    z.pins.push({ id: uid(), type: "link", x, y, to: b.dataset.to });
+    saveZone(z); closeSheet(true); renderPins(); renderList();
+    toast("Photo spot added");
+  });
+}
+function openLinkSheet(p){
+  const z = zoneById(S.cur); const to = zoneById(p.to);
+  if (S.readOnly) { if (to) openZone(to.id); return; }
+  S.sel = p.id; renderPins();
+  const el = openSheet(`
+    <div class="sh-head"><span class="bubble sq" style="width:40px;height:40px">${CAM}</span>
+      <div class="grow"><h3>Photo spot</h3><div class="sh-sub">${esc(to ? to.name : "That view was deleted")}</div></div>
+      <button class="x" data-x="close" aria-label="Close">×</button></div>
+    ${to ? `<img class="preview" src="${esc(imgURL(to.img))}" alt="">` : ""}
+    <div class="sheet-actions">
+      ${to ? `<button class="btn primary" data-x="go">Open this view</button>` : ""}
+      <button class="btn" data-x="move">Move</button>
+      <button class="btn danger" data-x="delete">Delete</button>
+    </div>`, { label: "Photo spot", onClose: () => { S.sel = null; renderPins(); } });
+  el.querySelector('[data-x="close"]').onclick = () => closeSheet();
+  const go = el.querySelector('[data-x="go"]'); if (go) go.onclick = () => { closeSheet(true); openZone(to.id); };
+  el.querySelector('[data-x="move"]').onclick = () => { S.moving = p.id; closeSheet(true); S.sel = p.id; renderPins(); renderTools(); };
+  el.querySelector('[data-x="delete"]').onclick = () => {
+    z.pins = z.pins.filter(q => q.id !== p.id); saveZone(z); closeSheet(true); S.sel = null; renderPins(); renderList();
+  };
+}
+
+/* ---------- Adding views ---------- */
+async function onViewFile(file){
+  const kind = S.pendingKind || "photo";
+  let shrunk;
+  try { shrunk = await shrink(file, kind === "map" ? 2400 : 2200); }
+  catch (e) { toast("That image couldn't be opened. Try a JPEG or PNG."); return; }
+  const upload = Store.putImage(shrunk.blob);
+  upload.catch(() => {});
+  const preview = URL.createObjectURL(shrunk.blob);
+  const photoCount = S.zones.filter(z => z.kind !== "map").length;
+  const defName = kind === "map" ? "Top-down map" : `Photo ${photoCount + 1}`;
+  const el = openSheet(`
+    <div class="sh-head"><div class="grow"><h3>Name this view</h3></div><button class="x" data-x="close" aria-label="Cancel">×</button></div>
+    <img class="preview" src="${preview}" alt="">
+    <label class="field"><span>Name</span><input type="text" id="f-name" value="${esc(defName)}" placeholder="e.g. Front gutter, left side" autocomplete="off"></label>
+    <p class="sh-sub" style="margin:0">${kind === "map" ? "Next, drop photo spots where you'll stand to take each picture." : "Tip: note where you stood so next year's photo lines up."}</p>
+    <div class="sheet-actions"><button class="btn primary" data-x="save">Save view</button></div>`,
+    { label: "Name this view", onClose: () => { URL.revokeObjectURL(preview); upload.then(ref => Store.deleteImage(ref)).catch(() => {}); } });
+  el.querySelector('[data-x="close"]').onclick = () => closeSheet();
+  const name = el.querySelector("#f-name");
+  name.addEventListener("focus", () => name.select(), { once: true });
+  el.querySelector('[data-x="save"]').onclick = async (ev) => {
+    const btn = ev.currentTarget; btn.disabled = true; btn.textContent = "Saving…";
+    let ref;
+    try { ref = await upload; }
+    catch (e) { btn.disabled = false; btn.textContent = "Save view"; toast(errMsg(e)); return; }
+    const z = { id: uid(), name: name.value.trim() || defName, kind, img: ref, w: shrunk.w, h: shrunk.h, created: Date.now(), pins: [] };
+    S.zones.push(z);
+    URL.revokeObjectURL(preview);
+    closeSheet(true);
+    queue(z.id, () => Store.saveZone(z));
+    openZone(z.id);
+  };
+}
+$("#file-view").addEventListener("change", e => {
+  const f = e.target.files && e.target.files[0]; e.target.value = "";
+  if (f) onViewFile(f);
+});
+$("#file-closeup").addEventListener("change", async e => {
+  const f = e.target.files && e.target.files[0]; e.target.value = "";
+  const tgt = S.closeupFor; S.closeupFor = null;
+  if (!f || !tgt) return;
+  const z = zoneById(tgt.zone); const p = z && z.pins.find(q => q.id === tgt.pin);
+  if (!p) return;
+  toast("Saving close-up…", 0);
+  try {
+    const { blob } = await shrink(f, 1400);
+    const ref = await Store.putImage(blob);
+    const old = p.closeup; p.closeup = ref;
+    saveZone(z, 0);
+    if (old) queue(z.id + ":img", () => Store.deleteImage(old));
+    toast("Close-up saved");
+    if (sheetEl && S.sel === p.id) tgt.redraw();
+  } catch (err) { toast(errMsg(err)); }
+});
+
+/* ---------- View menu ---------- */
+function zoneMenu(){
+  const z = zoneById(S.cur); if (!z) return;
+  const el = openSheet(`
+    <div class="sh-head"><div class="grow"><h3>${esc(z.name)}</h3></div><button class="x" data-x="close" aria-label="Close">×</button></div>
+    <label class="field"><span>Name</span><input type="text" id="f-rename" value="${esc(z.name)}" autocomplete="off"></label>
+    <div class="sheet-actions">
+      <button class="btn danger" data-x="delete">Delete view</button>
+      <button class="btn primary" data-x="save">Save name</button>
+    </div>`, { label: "View options" });
+  el.querySelector('[data-x="close"]').onclick = () => closeSheet();
+  el.querySelector('[data-x="save"]').onclick = () => {
+    const v = el.querySelector("#f-rename").value.trim(); if (!v) return;
+    z.name = v; saveZone(z, 0); closeSheet(true); $(".zname").textContent = v; $("#zimg").alt = v; toast("Name saved");
+  };
+  el.querySelector('[data-x="delete"]').onclick = () => confirmSheet(
+    `Delete ${z.name}?`, `Its photo and all ${ties(z).length} tie marks go with it. This can't be undone.`, "Delete view", () => {
+      S.zones = S.zones.filter(q => q.id !== z.id);
+      clearTimeout(timers[z.id]);
+      queue(z.id, () => Store.deleteZone(z.id));
+      const imgs = [z.img, ...(z.pins || []).map(p => p.closeup)].filter(Boolean);
+      queue(z.id + ":img", async () => { for (const r of imgs) await Store.deleteImage(r); });
+      for (const other of S.zones) {
+        const before = (other.pins || []).length;
+        other.pins = (other.pins || []).filter(p => !(p.type === "link" && p.to === z.id));
+        if (other.pins.length !== before) saveZone(other, 0);
+      }
+      renderHome(); toast("View deleted");
+    });
+}
+
+/* ---------- PDF ---------- */
+async function composite(z, maxW = 1600){
+  const img = await loadImg(imgURL(z.img));
+  const s = Math.min(1, maxW / img.naturalWidth);
+  const c = document.createElement("canvas");
+  c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+  const ctx = c.getContext("2d");
+  ctx.drawImage(img, 0, 0, c.width, c.height);
+  const r = Math.max(9, Math.round(c.width * ({ tiny: 0.011, small: 0.014, medium: 0.019 }[dotSize()])));
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  for (const p of z.pins || []) {
+    const x = p.x * c.width, y = p.y * c.height;
+    if (p.type === "link") {
+      const to = zoneById(p.to); if (!to) continue;
+      ctx.fillStyle = "#1C1A18"; ctx.strokeStyle = "#fff"; ctx.lineWidth = r * 0.22;
+      ctx.beginPath(); ctx.rect(x - r, y - r, r * 2, r * 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#fff"; ctx.font = `bold ${Math.round(r * 1.05)}px Helvetica, Arial, sans-serif`;
+      ctx.fillText(String(viewNo(to)), x, y + 1);
+      continue;
+    }
+    const t = TIE[p.c] || TIE.red;
+    ctx.beginPath(); ctx.arc(x, y, r + r * 0.32, 0, Math.PI * 2); ctx.fillStyle = "rgba(0,0,0,.65)"; ctx.fill();
+    ctx.beginPath(); ctx.arc(x, y, r + r * 0.2, 0, Math.PI * 2); ctx.fillStyle = "#fff"; ctx.fill();
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fillStyle = t.hex; ctx.fill();
+    ctx.fillStyle = t.ink; ctx.font = `bold ${Math.round(r * 1.1)}px Helvetica, Arial, sans-serif`;
+    ctx.fillText(String(p.n), x, y + 1);
+  }
+  return { data: c.toDataURL("image/jpeg", 0.85), w: c.width, h: c.height };
+}
+async function thumb(ref, size = 220){
+  const img = await loadImg(imgURL(ref));
+  const s = Math.min(1, size / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement("canvas");
+  c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  return { data: c.toDataURL("image/jpeg", 0.8), w: c.width, h: c.height };
+}
+function hexRGB(h){ const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+
+async function makePDF(btn){
+  if (!window.jspdf || !window.jspdf.jsPDF) { toast("The PDF maker didn't load. Check your connection and reload."); return; }
+  if (btn) { btn.disabled = true; btn.textContent = "Building PDF…"; }
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: "pt", format: "letter" });
+    const W = 612, H = 792, M = 42, CW = W - M * 2;
+    const all = allTies();
+    const date = new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+
+    const swatch = (x, y, r, t, label) => {
+      doc.setFillColor(...hexRGB(t.hex)); doc.setDrawColor(90, 80, 70); doc.setLineWidth(0.8);
+      doc.circle(x, y, r, "FD");
+      if (label != null) {
+        doc.setTextColor(...hexRGB(t.ink === "#fff" ? "#ffffff" : "#2A1F14"));
+        doc.setFont("helvetica", "bold"); doc.setFontSize(r * 1.05);
+        doc.text(String(label), x, y + r * 0.37, { align: "center" });
+      }
+      doc.setTextColor(30, 24, 18);
+    };
+
+    // Cover
+    doc.setTextColor(30, 24, 18);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(30); doc.text("Zippy Lights", M, 80);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(12);
+    doc.text(`Christmas lights setup, saved ${date}. ${all.length} ties across ${S.zones.length} ${S.zones.length === 1 ? "view" : "views"}.`, M, 102);
+    let y = 142;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(15); doc.text("Tie key", M, y); y += 22;
+    doc.setFontSize(11);
+    for (const t of TIES) {
+      const count = all.filter(p => p.c === t.k).length;
+      const meaning = S.legend[t.k] || "";
+      if (!count && !meaning) continue;
+      swatch(M + 8, y - 4, 8, t);
+      doc.setFont("helvetica", "bold"); doc.text(t.name, M + 24, y);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${count} ${count === 1 ? "tie" : "ties"}`, M + 90, y);
+      if (meaning) doc.text(doc.splitTextToSize(meaning, CW - 170)[0], M + 160, y);
+      y += 22;
+    }
+    y += 14;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(15); doc.text("Views", M, y); y += 22;
+    doc.setFontSize(11); doc.setFont("helvetica", "normal");
+    S.zones.forEach((z, i) => {
+      doc.text(`${i + 1}.  ${z.name}  (${z.kind === "map" ? "top-down map" : "photo"}, ${ties(z).length} ties)`, M, y); y += 18;
+    });
+
+    // One section per view
+    for (let i = 0; i < S.zones.length; i++) {
+      const z = S.zones[i];
+      doc.addPage(); y = M + 14;
+      doc.setFont("helvetica", "bold"); doc.setFontSize(18); doc.setTextColor(30, 24, 18);
+      doc.text(`${i + 1}. ${z.name}`, M, y); y += 14;
+      try {
+        const im = await composite(z);
+        const s = Math.min(CW / im.w, 380 / im.h);
+        const w = im.w * s, h = im.h * s;
+        doc.addImage(im.data, "JPEG", M + (CW - w) / 2, y, w, h); y += h + 22;
+      } catch (e) {
+        doc.setFont("helvetica", "normal"); doc.setFontSize(11); doc.text("(Photo couldn't be loaded.)", M, y + 14); y += 34;
+      }
+      const t = ties(z).slice().sort((a,b) => (ORDER[a.c] - ORDER[b.c]) || (a.n - b.n));
+      for (const p of t) {
+        const c = TIE[p.c] || TIE.red;
+        let cu = null;
+        if (p.closeup) { try { cu = await thumb(p.closeup); } catch (e) {} }
+        doc.setFontSize(10.5);
+        const textW = CW - 64 - (cu ? 78 : 0);
+        const labelLines = doc.splitTextToSize(p.label || "No spot written", textW);
+        const noteLines = p.note ? doc.splitTextToSize(p.note, textW) : [];
+        const textH = 15 + labelLines.length * 13 + noteLines.length * 12.5;
+        const rowH = Math.max(cu ? 70 : 34, textH + 6);
+        if (y + rowH > H - M) { doc.addPage(); y = M + 10; }
+        doc.setDrawColor(90, 80, 70); doc.setLineWidth(1); doc.rect(M, y, 12, 12);
+        swatch(M + 34, y + 6, 11, c, p.n);
+        let ty = y + 10;
+        doc.setFont("helvetica", "bold"); doc.setFontSize(11.5); doc.text(tieName(p), M + 54, ty); ty += 14;
+        doc.setFont("helvetica", "normal"); doc.setFontSize(10.5);
+        doc.text(labelLines, M + 54, ty); ty += labelLines.length * 13;
+        if (noteLines.length) { doc.setTextColor(95, 80, 60); doc.text(noteLines, M + 54, ty); doc.setTextColor(30, 24, 18); }
+        if (cu) {
+          const s = Math.min(64 / cu.w, 64 / cu.h);
+          doc.addImage(cu.data, "JPEG", W - M - cu.w * s, y, cu.w * s, cu.h * s);
+        }
+        y += rowH;
+        doc.setDrawColor(215, 205, 190); doc.setLineWidth(0.5); doc.line(M, y - 4, W - M, y - 4);
+        y += 4;
+      }
+      const l = links(z).filter(p => zoneById(p.to));
+      if (l.length) {
+        if (y + 30 > H - M) { doc.addPage(); y = M + 10; }
+        doc.setFont("helvetica", "bold"); doc.setFontSize(11.5); doc.text("Photo spots on this map", M, y + 8); y += 24;
+        doc.setFont("helvetica", "normal"); doc.setFontSize(10.5);
+        for (const p of l) {
+          if (y + 16 > H - M) { doc.addPage(); y = M + 10; }
+          const to = zoneById(p.to);
+          doc.text(`Square ${viewNo(to)}: stand here for "${to.name}"`, M, y); y += 16;
+        }
+      }
+    }
+
+    const blob = doc.output("blob");
+    const filename = `zippy-lights-${new Date().getFullYear()}.pdf`;
+    if (S.downloads) {
+      try { await S.downloads.save({ filename, data: blob }); toast("PDF saved"); }
+      catch (e) {
+        if (e && e.code === "declined") toast("PDF not saved");
+        else if (e && e.code === "rate_limited") toast("A save prompt is already open.");
+        else toast("Saving files isn't available here.");
+      }
+    } else {
+      try { doc.save(filename); } catch (e) { toast("Saving files isn't available here."); }
+    }
+  } catch (e) {
+    console.error(e); toast("The PDF couldn't be built. Try again.");
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = "Save PDF"; }
+  }
+}
+
+/* ---------- Backup and restore ---------- */
+function blobToDataURL(b){
+  return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(b); });
+}
+function dataURLToBlob(u){
+  const [head, body] = u.split(",");
+  const mime = (head.match(/data:([^;]+)/) || [])[1] || "image/jpeg";
+  const bin = atob(body); const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], { type: mime });
+}
+async function imageAsDataURL(ref){
+  try { const r = await fetch(imgURL(ref)); if (r.ok) return await blobToDataURL(await r.blob()); } catch (e) {}
+  const img = await loadImg(imgURL(ref));
+  const c = document.createElement("canvas"); c.width = img.naturalWidth; c.height = img.naturalHeight;
+  c.getContext("2d").drawImage(img, 0, 0);
+  return c.toDataURL("image/jpeg", 0.9);
+}
+async function saveFile(filename, data, mime){
+  if (S.downloads) {
+    try { await S.downloads.save({ filename, data }); return true; }
+    catch (e) {
+      if (e && e.code === "declined") toast("Not saved");
+      else if (e && e.code === "rate_limited") toast("A save prompt is already open.");
+      else toast("Saving files isn't available here.");
+      return false;
+    }
+  }
+  try {
+    const blob = data instanceof Blob ? data : new Blob([data], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    return true;
+  } catch (e) { toast("Saving files isn't available here."); return false; }
+}
+async function exportBackup(btn){
+  btn.disabled = true; btn.textContent = "Packing photos…";
+  try {
+    const refs = new Set();
+    S.zones.forEach(z => { if (z.img) refs.add(z.img); (z.pins || []).forEach(p => p.closeup && refs.add(p.closeup)); });
+    const images = {};
+    for (const ref of refs) { try { images[ref] = await imageAsDataURL(ref); } catch (e) {} }
+    const data = JSON.stringify({ app: "zippy-lights", version: 1, saved: new Date().toISOString(), legend: S.legend, zones: S.zones, images });
+    const d = new Date();
+    const name = `zippy-lights-backup-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}.json`;
+    if (await saveFile(name, data, "application/json")) toast("Backup saved");
+  } catch (e) { console.error(e); toast("The backup couldn't be made. Try again."); }
+  finally { btn.disabled = false; btn.textContent = "Save backup"; }
+}
+async function importBackup(file){
+  let data;
+  try { data = JSON.parse(await file.text()); } catch (e) { data = null; }
+  if (!data || data.app !== "zippy-lights" || !Array.isArray(data.zones)) { toast("That file isn't a Zippy Lights backup."); return; }
+  const n = data.zones.length;
+  const t = data.zones.reduce((a, z) => a + (z.pins || []).filter(p => p.type !== "link").length, 0);
+  confirmSheet("Restore this backup?", `It has ${n} ${n === 1 ? "view" : "views"} and ${t} ${t === 1 ? "tie" : "ties"}. Everything in the app now gets replaced.`, "Restore backup", async () => {
+    toast("Restoring…", 0);
+    try {
+      const map = {};
+      for (const [ref, url] of Object.entries(data.images || {})) {
+        try { map[ref] = await Store.putImage(dataURLToBlob(url)); } catch (e) { if (e && e.code === "quota_exceeded") throw e; }
+      }
+      const old = S.zones;
+      const zones = data.zones.map(z => ({
+        ...z, img: map[z.img] || null,
+        pins: (z.pins || []).map(p => p.closeup ? { ...p, closeup: map[p.closeup] || null } : { ...p }),
+      }));
+      for (const z of zones) await queue(z.id, () => Store.saveZone(z));
+      S.legend = { ...(data.legend || {}) };
+      await queue("legend", () => Store.saveLegend(S.legend));
+      for (const z of old) {
+        clearTimeout(timers[z.id]);
+        if (!zones.some(q => q.id === z.id)) await queue(z.id, () => Store.deleteZone(z.id));
+        for (const r of [z.img, ...(z.pins || []).map(p => p.closeup)].filter(Boolean)) await Store.deleteImage(r);
+      }
+      S.zones = zones.sort((a, b) => (a.created || 0) - (b.created || 0));
+      applySkin(); renderHome(); toast("Backup restored");
+    } catch (e) { console.error(e); toast(errMsg(e), 5000); }
+  });
+}
+$("#file-backup").addEventListener("change", e => {
+  const f = e.target.files && e.target.files[0]; e.target.value = "";
+  if (f) importBackup(f);
+});
+
+/* ---------- Events ---------- */
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-act]"); if (!b || b.closest(".scrim")) return;
+  const act = b.dataset.act;
+  if (act === "open") openZone(b.dataset.id);
+  else if (act === "home") renderHome();
+  else if (act === "add-photo" || act === "add-map") { S.pendingKind = act === "add-map" ? "map" : "photo"; $("#file-view").click(); }
+  else if (act === "pdf") makePDF(b);
+  else if (act === "backup") exportBackup(b);
+  else if (act === "restore") $("#file-backup").click();
+  else if (act === "new-season") confirmSheet("Start a new season?", "Every tie goes back to not up. Your photos, marks and notes stay.", "Start new season", () => {
+      S.zones.forEach(z => { let ch = false; (z.pins || []).forEach(p => { if (p.done) { p.done = false; ch = true; } }); if (ch) saveZone(z, 0); });
+      renderHome(); toast("New season started");
+    });
+  else if (act === "zone-menu") zoneMenu();
+  else if (act === "tool") { S.tool = b.dataset.tool; renderTools(); }
+  else if (act === "color") { S.color = b.dataset.c; renderTools(); }
+  else if (act === "zoom-in" || act === "zoom-out") {
+    const steps = [1, 1.5, 2, 3, 4];
+    let i = steps.indexOf(S.zoom); if (i < 0) i = 0;
+    i = Math.max(0, Math.min(steps.length - 1, i + (act === "zoom-in" ? 1 : -1)));
+    S.zoom = steps[i]; layoutStage();
+  }
+  else if (act === "skin") {
+    S.legend._theme = b.dataset.s;
+    if (!S.readOnly) saveLegend();
+    const y = window.scrollY; applySkin(); renderHome(); window.scrollTo(0, y);
+  }
+  else if (act === "dot") {
+    if (S.readOnly) { S.legend = { ...S.legend, _dot: b.dataset.s }; }
+    else { S.legend._dot = b.dataset.s; saveLegend(); }
+    renderPins(); renderTools();
+  }
+  else if (act === "cancel-move") { S.moving = null; S.sel = null; renderPins(); renderTools(); }
+  else if (act === "pin") { centerOn(b.dataset.id); openPinSheet(b.dataset.id); }
+});
+document.addEventListener("click", e => {
+  const pin = e.target.closest("[data-pin]"); if (!pin) return;
+  e.stopPropagation();
+  if (S.moving || justDragged) return;
+  openPinSheet(pin.dataset.pin);
+});
+document.addEventListener("change", e => {
+  const id = e.target.dataset && e.target.dataset.done;
+  if (!id) return;
+  const z = zoneById(S.cur); const p = z && z.pins.find(q => q.id === id);
+  if (p) { p.done = e.target.checked; saveZone(z); renderPins(); renderList(); }
+});
+document.addEventListener("input", e => {
+  const k = e.target.dataset && e.target.dataset.legend;
+  if (!k) return;
+  S.legend[k] = e.target.value.slice(0, 80);
+  saveLegend();
+});
+/* Drag a tie to move it */
+let drag = null, justDragged = false;
+document.addEventListener("pointerdown", e => {
+  const el = e.target.closest("[data-pin]");
+  if (!el || S.readOnly || S.moving || !S.cur) return;
+  const z = zoneById(S.cur); const p = z && z.pins.find(q => q.id === el.dataset.pin);
+  if (!p) return;
+  drag = { el, p, z, pid: e.pointerId, sx: e.clientX, sy: e.clientY, ox: p.x, oy: p.y, moved: false };
+});
+document.addEventListener("pointermove", e => {
+  if (!drag || e.pointerId !== drag.pid) return;
+  const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+  if (!drag.moved) {
+    if (Math.hypot(dx, dy) < 6) return;
+    drag.moved = true; drag.el.classList.add("dragging");
+    try { drag.el.setPointerCapture(drag.pid); } catch (err) {}
+  }
+  e.preventDefault();
+  const r = $("#plate").getBoundingClientRect();
+  drag.x = Math.min(1, Math.max(0, drag.ox + dx / r.width));
+  drag.y = Math.min(1, Math.max(0, drag.oy + dy / r.height));
+  drag.el.style.left = (drag.x * 100).toFixed(3) + "%";
+  drag.el.style.top = (drag.y * 100).toFixed(3) + "%";
+}, { passive: false });
+function endDrag(e){
+  if (!drag || e.pointerId !== drag.pid) return;
+  const d = drag; drag = null;
+  if (!d.moved) return;
+  justDragged = true; setTimeout(() => { justDragged = false; }, 80);
+  if (e.type === "pointercancel") { renderPins(); return; }
+  d.p.x = d.x; d.p.y = d.y; saveZone(d.z); renderPins();
+}
+document.addEventListener("pointerup", endDrag);
+document.addEventListener("pointercancel", endDrag);
+
+function centerOn(id){
+  const z = zoneById(S.cur); const p = z && z.pins.find(q => q.id === id); const stage = $("#stage"), plate = $("#plate");
+  if (!p || !stage) return;
+  window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  stage.scrollLeft = p.x * plate.clientWidth - stage.clientWidth / 2;
+  stage.scrollTop = p.y * plate.clientHeight - stage.clientHeight / 2;
+}
+
+/* ---------- Start ---------- */
+async function init(){
+  renderLoading();
+  let db = null, assets = null, dl = null;
+  if (window.claude && typeof window.claude.use === "function") {
+    try {
+      [db, assets, dl] = await Promise.all([
+        window.claude.use("db").catch(() => null),
+        window.claude.use("assets").catch(() => null),
+        window.claude.use("downloads").catch(() => null),
+      ]);
+    } catch (e) {}
+  }
+  S.downloads = dl;
+  if (db) {
+    Cloud.db = db; Cloud.assets = assets; Store = Cloud; S.mode = "cloud"; S.readOnly = !assets;
+  } else {
+    try { Local.db = await Local.open(); Store = Local; S.mode = "local"; }
+    catch (e) { Store = Mem; S.mode = "memory"; }
+  }
+  try {
+    const { zones, legend } = await Store.loadAll();
+    zones.forEach(z => { z.pins = Array.isArray(z.pins) ? z.pins : []; });
+    S.zones = zones.sort((a, b) => (a.created || 0) - (b.created || 0));
+    S.legend = legend || {};
+    applySkin();
+  } catch (e) {
+    console.error(e); toast("Your views couldn't be loaded. Reload to try again.", 5000);
+  }
+  renderHome();
+}
+init();
+})();
+</script>
+</body>
+</html>
